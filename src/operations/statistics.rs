@@ -158,15 +158,9 @@ impl InterpretData for StatData {
     }
 }
 
-pub fn construction() {
-    let _box = vec![5.0, 5.0, 3.0, 3.0, 6.5].into_boxed_slice();
-
-    let x = StatData::new(_box);
-    dbg!(x);
-}
-
 #[test]
 fn test() {
+    // tests construction and data parsing.
     let _box = vec![1.0, 2.0, 3.0, 4.0, 5.0].into_boxed_slice();
     let x = StatData::new(_box);
     dbg!(&x);
