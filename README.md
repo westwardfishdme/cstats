@@ -7,5 +7,6 @@ Calculates statistics data in Rust. Accepts csv and plaintext files as stdin or 
 - `cstats stats sum` shows the sum
 
 Todo:
+- fix `STDIN` parsing, doesn't work at the moment...
 - `cstats stats max {file}` show the max
 - `cstats stats min {file}` show the min
