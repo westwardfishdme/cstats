@@ -19,13 +19,19 @@ pub struct StatData {
     // standard deviation values
     pub sigma: f64,              // population based
     pub standard_deviation: f64, // sample values
+
+    // quartiles
+    pub q1: f64,
+    pub q3: f64,
+    pub iqr: f64,
     // count
     pub count: usize,
 }
 
 impl StatData {
-    pub fn new(values: Box<[f64]>) -> StatData {
-        let x = StatData {
+    pub fn new(mut values: Box<[f64]>) -> StatData {
+        values.sort_by(f64::total_cmp);
+        let mut stat_struct = StatData {
             sum: values.sum(),
             avg: values.average(),
             min: values.min(),
@@ -34,28 +40,42 @@ impl StatData {
 
             sigma: 0_f64,
             standard_deviation: 0_f64,
+            //q1-q3
+            q1: values.find_q1(),
+            q3: values.find_q3(),
+            iqr: 0_f64,
             count: values.len(),
         };
-        let mut y = x;
-        y.sigma = y.sigma(&values);
-        y.standard_deviation = y.standard_deviation(&values);
+        // find the standard deviation as a sample, and as a population
+        stat_struct.sigma = stat_struct.sigma(&values);
+        stat_struct.standard_deviation = stat_struct.standard_deviation(&values);
 
-        return y;
+        // find the interquartile range.
+        stat_struct.iqr = stat_struct.iqr();
+
+        return stat_struct;
     }
 }
 impl Display for StatData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "sum: {}\nsize: {} \nmedian: {:.6}\navg: {:.6}\nmin: {}\nmax: {}\n\u{3c3}: {:.6}\ns: {:.6}",
+            "sum: {}
+                \nsize: {} \nmedian: {:.6}\navg: {:.6}\nmin: {}\nmax: {}\n\u{3c3}: {:.6}\ns: {:.6}\n\nQuartiles:\nQ1: {:.6}\nQ2: {:.6}\nQ3: {:.6}\nIQR: {:.6}",
             self.sum,
             self.count,
             self.median,
             self.avg,
             self.min,
             self.max,
+            // standard deviation
             self.sigma,
-            self.standard_deviation
+            self.standard_deviation,
+            // quatile stuff
+            self.q1,
+            self.median, // median == q2
+            self.q3,
+            self.iqr
         )
     }
 }
@@ -66,6 +86,8 @@ trait StatCalc {
     fn min(self) -> f64;
     fn max(self) -> f64;
     fn median(self) -> f64;
+    fn find_q1(self) -> f64;
+    fn find_q3(self) -> f64;
 }
 
 impl StatCalc for &Box<[f64]> {
@@ -103,70 +125,64 @@ impl StatCalc for &Box<[f64]> {
     }
 
     fn max(self) -> f64 {
-        //! Calculates the max value for a dataset
-        //! Runs in O(n)
-        let mut relative_max = 0.0_f64;
-        let mut i: usize = 0;
-        let values = self;
-
-        while i < values.len() {
-            if i == 0 {
-                relative_max = values[i]
-            }
-            if values[i] > relative_max {
-                relative_max = values[i]
-            }
-            i += 1
-        }
-        return relative_max;
+        let lastidx = self.len() - 1;
+        return self[lastidx];
     }
 
     fn min(self) -> f64 {
-        //! Calculates the min value for a dataset
-        //! Runs in O(n)
-        let mut relative_min = 0.0_f64;
-        let mut i: usize = 0;
-        let values = self;
-
-        while i < values.len() {
-            if i == 0 {
-                relative_min = values[i]
-            }
-            if values[i] < relative_min {
-                relative_min = values[i]
-            }
-            i += 1
-        }
-
-        return relative_min;
+        return self[0];
     }
     fn median(self) -> f64 {
-        //! sorts the list and calculates
-        //! the midpoint value. If the list
+        //! calculates the midpoint value. If the list
         //! is an uneven length, then return
         //! the point between 2 closest indices.
-        let mut list = self.clone();
-        let len = list.len();
+        let len = self.len();
         // subtract 1 for 0 point indexing
         let midpoint = (len / 2) - 1;
         let result: f64;
 
-        list.sort_by(f64::total_cmp);
-
         // calculate the median based on midpoint values
         if len % 2 == 0 {
             let second_midpoint = midpoint + 1;
-            result = (list[second_midpoint] + list[midpoint]) / 2.0;
+            result = (self[second_midpoint] + self[midpoint]) / 2.0;
         } else {
-            result = list[midpoint];
+            result = self[midpoint];
         }
 
+        return result;
+    }
+    fn find_q1(self) -> f64 {
+        let len = self.len();
+        let midpoint = (len / 2) - 1;
+        let q1pt_idx0 = midpoint / 2;
+        let result: f64;
+        if len % 2 == 0 {
+            let q1pt_idx1 = q1pt_idx0 + 1;
+            result = (self[q1pt_idx0] + self[q1pt_idx1]) / 2.0;
+        } else {
+            result = self[q1pt_idx0];
+        }
+        return result;
+    }
+    fn find_q3(self) -> f64 {
+        let len = self.len();
+        let midpoint = (len / 2) - 1;
+        let q1pt_idx0 = midpoint / 2;
+        let q3pt_idx0 = q1pt_idx0 + midpoint + 1;
+        let result: f64;
+        if len % 2 == 0 {
+            let q3pt_idx1 = q3pt_idx0 + 1;
+            result = (self[q3pt_idx0] + self[q3pt_idx1]) / 2.0;
+        } else {
+            result = self[q3pt_idx0];
+        }
         return result;
     }
 }
 trait InterpretData {
     fn sigma(self, values: &Box<[f64]>) -> f64;
     fn standard_deviation(self, values: &Box<[f64]>) -> f64;
+    fn iqr(self) -> f64;
 }
 
 impl InterpretData for StatData {
@@ -198,6 +214,9 @@ impl InterpretData for StatData {
         }
         summative_res = summative_res / (len - 1) as f64;
         return summative_res.sqrt();
+    }
+    fn iqr(self) -> f64 {
+        self.q3 - self.q1
     }
 }
 
