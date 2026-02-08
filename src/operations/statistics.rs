@@ -61,19 +61,19 @@ impl Display for StatData {
         write!(
             f,
             "sum: {}
-            \nsize: {} 
-            \nmedian: {:.6}
-            \navg: {:.6}
-            \nmin: {}
-            \nmax: {}
-            \n\u{3c3}: {:.6}
-            \ns: {:.6}
-            \n
-            \nQuartiles:
-            \nQ1: {:.6}
-            \nQ2: {:.6}
-            \nQ3: {:.6}
-            \nIQR: {:.6}",
+            size: {} 
+            median: {:.6}
+            avg: {:.6}
+            min: {}
+            max: {}
+            \u{3c3}: {:.6}
+            s: {:.6}
+            
+            Quartiles:
+            Q1: {:.6}
+            Q2: {:.6}
+            Q3: {:.6}
+            IQR: {:.6}",
             self.sum,
             self.count,
             self.median,
@@ -104,6 +104,7 @@ trait StatCalc {
 
 impl StatCalc for &Box<[f64]> {
     #[doc(hidden)]
+    #[inline]
     fn sum(self) -> f64 {
         //! Returns a sum value. If the result breaks the constraints
         //! of the type, should return None.
