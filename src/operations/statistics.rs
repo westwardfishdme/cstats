@@ -61,7 +61,19 @@ impl Display for StatData {
         write!(
             f,
             "sum: {}
-                \nsize: {} \nmedian: {:.6}\navg: {:.6}\nmin: {}\nmax: {}\n\u{3c3}: {:.6}\ns: {:.6}\n\nQuartiles:\nQ1: {:.6}\nQ2: {:.6}\nQ3: {:.6}\nIQR: {:.6}",
+            \nsize: {} 
+            \nmedian: {:.6}
+            \navg: {:.6}
+            \nmin: {}
+            \nmax: {}
+            \n\u{3c3}: {:.6}
+            \ns: {:.6}
+            \n
+            \nQuartiles:
+            \nQ1: {:.6}
+            \nQ2: {:.6}
+            \nQ3: {:.6}
+            \nIQR: {:.6}",
             self.sum,
             self.count,
             self.median,
